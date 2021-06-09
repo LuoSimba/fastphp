@@ -47,6 +47,28 @@ class ResultSet
     }
 
     /**
+     * 获取第一列的所有数据
+     */
+    public function getFirstColumn()
+    {
+        if ($this->rs->field_count < 1)
+            return null;
+
+        $b = $this->rs->data_seek(0);
+        if ($b === false)
+            return null;
+
+        $list = array();
+
+        while ($row = $this->rs->fetch_row())
+        {
+            $list[] = $row[0];
+        }
+
+        return $list;
+    }
+
+    /**
      * 释放资源
      */
     public function free()
