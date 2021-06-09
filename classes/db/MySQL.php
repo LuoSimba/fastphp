@@ -5,7 +5,7 @@ class MySQL
 {
 
     private $link;
-   
+
     public function __construct()
     {
         $this->link = mysqli_init();
@@ -36,6 +36,8 @@ class MySQL
         // 查询失败时返回 false
         if ($rs === false)
             $this->_raise_error();
+        else if ($rs === true)
+            return true;
 
         $rs1 = new ResultSet($rs);
 
@@ -45,6 +47,25 @@ class MySQL
     private function _raise_error()
     {
         throw new \Exception('MySQL: ' . $this->link->error . ', ' . $this->link->errno);
+    }
+
+    public function beginTransaction()
+    {
+        $b = $this->link->begin_transaction();
+        if ($b === false)
+            $this->_raise_error();
+    }
+
+    public function commit()
+    {
+        if (!$this->link->commit())
+            $this->_raise_error();
+    }
+
+    public function rollback()
+    {
+        if (!$this->link->rollback())
+            $this->_raise_error();
     }
 }
 
