@@ -7,4 +7,5 @@ namespace boot {
     \core\import('/loader.php');
     \core\import('/debug.php');
     \core\import('/func.php');
+    \core\import('/hash.php');
 }
