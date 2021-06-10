@@ -37,7 +37,6 @@ namespace debug {
             echo $a . ($b ? ' - ' . $b : '') . PHP_EOL;
         }
     }
-
 }
 
 
