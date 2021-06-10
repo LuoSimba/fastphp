@@ -1,6 +1,14 @@
 <?php
 namespace fs;
 
+/**
+ * $file = new \fs\Memory;
+ *
+ * $file->write('hello');
+ *
+ * $file->dump();
+ * $file->close();
+ */
 class Memory
 {
     private $fp;
