@@ -35,32 +35,6 @@ class SockData
         return $this->so;
     }
 
-    public function recv()
-    {
-        $buf = '';
-
-        // 尝试读取最多 2048 字节
-        //
-        // 10054 - 远程主机强迫关闭了一个现有的连接
-        $ret = socket_recv($this->so, $buf, 2048, 0);
-
-        if ($ret === false)
-        {
-            $this->close();
-            return;
-        }
-
-        // 发现远端关闭
-        if ($ret === 0)
-        {
-            $this->close();
-            return;
-        }
-        
-        // 保存接收的数据
-        $this->buffer .= $buf;
-    }
-
     /**
      * 是否关闭
      */
@@ -80,11 +54,11 @@ class SockData
         $this->closed = true;
     }
 
-    /**
-     * 返回一个默认的响应
-     */
-    public function resp()
+    public function onData(string $buf)
     {
+        // 保存接收的数据
+        $this->buffer .= $buf;
+
         if ($this->closed())
             return;
 

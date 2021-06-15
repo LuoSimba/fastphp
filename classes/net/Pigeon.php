@@ -106,14 +106,32 @@ class Pigeon
     {
         $data = $this->get($id);
 
-        $data->recv(); // XXX
+        $fd = $data->fd();
+        $buf = '';
 
-        if ($data->closed())
+        // 尝试读取最多 2048 字节
+        //
+        // 10054 - 远程主机强迫关闭了一个现有的连接
+        $ret = socket_recv($fd, $buf, 2048, 0);
+
+        if ($ret === false)
         {
+            $data->close();
+
             $this->del($id);
         }
+        // 发现远端关闭
+        else if ($ret === 0)
+        {
+            $data->close();
 
-        $data->onData();
+            $this->del($id);
+        }
+        // 新数据
+        else 
+        {
+            $data->onData($buf);
+        }
     }
 }
 
