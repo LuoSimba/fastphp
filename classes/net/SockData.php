@@ -1,6 +1,8 @@
 <?php
 namespace net;
 
+use JsonException;
+
 /**
  * 基于 TCP 的通信服务
  */
@@ -55,15 +57,51 @@ class SockData
         $this->closed = true;
     }
 
+    final public function bufferSize()
+    {
+        return strlen($this->buffer);
+    }
+
     final public function onData(string $buf)
     {
         // 保存接收的数据
         $this->buffer .= $buf;
 
-        //$this->onMessage();
+        // 是否收到一个头部
+        if ($this->bufferSize() < 4)
+            return;
+
+        $header = unpack('N', $this->buffer);
+        // 得到主体的大小
+        $size = $header[1];
+
+        // 是否收到一个完整的包
+        if ($this->bufferSize() < $size + 4)
+            return;
+        $string = substr($this->buffer, 4, $size);
+
+        // 将整个包移出缓存
+        $this->buffer = substr($this->buffer, $size + 4);
+
+        // 这个包没有主体, 无需处理
+        if ($size === 0)
+            return;
+
+        try {
+
+            $msg = json_decode($string, false, 512, JSON_THROW_ON_ERROR);
+
+            $this->onMessage($msg);
+
+        } catch (JsonException $e) {
+
+            // XXX 暂时忽略 JSON 解析的错误
+            echo 'json decode error ...' . $this->id() . PHP_EOL;
+            //throw $e;
+        }
     }
 
-    public function onMessage()
+    public function onMessage(object $msg)
     {
         if ($this->closed())
             return;

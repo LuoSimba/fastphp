@@ -101,6 +101,8 @@ class Pigeon
 
     /**
      * 通知有新的数据到达
+     *
+     * 由服务统一读取数据，并通知各个连接
      */
     private function notice(int $id)
     {
