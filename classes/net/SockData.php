@@ -1,6 +1,9 @@
 <?php
 namespace net;
 
+/**
+ * 基于 TCP 的通信服务
+ */
 class SockData
 {
     private $id;
@@ -13,8 +16,6 @@ class SockData
 
     private $closed = false;
 
-
-
     public function __construct($so)
     {
         $this->id = spl_object_id($this);
@@ -25,12 +26,12 @@ class SockData
         $this->update_time = $this->create_time;
     }
 
-    public function id()
+    final public function id()
     {
         return $this->id;
     }
 
-    public function fd()
+    final public function fd()
     {
         return $this->so;
     }
@@ -38,7 +39,7 @@ class SockData
     /**
      * 是否关闭
      */
-    public function closed()
+    final public function closed()
     {
         return $this->closed;
     }
@@ -46,7 +47,7 @@ class SockData
     /**
      * 关闭 socket 连接
      */
-    private function close()
+    final public function close()
     {
         socket_close( $this->so );
         //socket_shutdown($msgso);
@@ -54,11 +55,16 @@ class SockData
         $this->closed = true;
     }
 
-    public function onData(string $buf)
+    final public function onData(string $buf)
     {
         // 保存接收的数据
         $this->buffer .= $buf;
 
+        //$this->onMessage();
+    }
+
+    public function onMessage()
+    {
         if ($this->closed())
             return;
 
