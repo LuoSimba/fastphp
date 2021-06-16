@@ -20,6 +20,7 @@ class SockData
 
     public function __construct($so)
     {
+        // get_resource_id require PHP8
         $this->id = spl_object_id($this);
 
         $this->so = $so;
@@ -106,28 +107,34 @@ class SockData
         if ($this->closed())
             return;
 
-        $content = $this->buffer;
-        $ContentLength = strlen($content);
+        $o = new \stdClass;
 
-        // 如果改用 HTTP/1.0
-        // 将 Connection: close
-        // 那么在同时进行两次请求的时候
-        // 会非常慢
-        $header = "HTTP/1.1 200 OK\r\n"
-            . "Content-Type: text/plain\r\n"
-            . "Content-Length: $ContentLength\r\n"
-            . "\r\n";
+        $o->msg = "hello java world.\r\n";
 
-        $this->send($header);
-        $this->send($content);
+        $this->sendPackage($o);
     }
 
     /**
      * 发送数据
      */
-    protected function send($str)
+    private function send($str)
     {
         socket_send($this->so, $str, strlen($str), 0);
     }
+
+    private function sendPackage(object $o)
+    {
+        $letter = json_encode($o);
+
+        $size = strlen($letter);
+
+        $header = pack('N', $size);
+
+        $this->send($header);
+        $this->send($letter);
+    }
 }
 
+// 如果改用 HTTP/1.0
+// 将 Connection: close
+// 那么在同时进行两次请求的时候会非常慢
