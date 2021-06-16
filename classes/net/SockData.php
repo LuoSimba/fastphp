@@ -2,6 +2,7 @@
 namespace net;
 
 use JsonException;
+use stdClass;
 
 /**
  * 基于 TCP 的通信服务
@@ -11,12 +12,22 @@ class SockData
     private $id;
     private $so;
 
-    protected $buffer = '';
+    /**
+     * 缓存
+     *
+     * 不能直接操作缓存。
+     * 使用 onData() 来保存数据到缓存
+     * 一旦缓存攒够一个消息包，就会通知 onMessage() 处理
+     */
+    private $buffer = '';
 
     private $create_time;
     private $update_time;
 
     private $closed = false;
+
+
+
 
     public function __construct($so)
     {
@@ -58,18 +69,25 @@ class SockData
         $this->closed = true;
     }
 
-    final public function bufferSize()
+    /**
+     * 当前缓存的内容大小
+     */
+    final public function contentSize()
     {
         return strlen($this->buffer);
     }
 
+    /**
+     * 当新的数据到来时
+     */
     final public function onData(string $buf)
     {
         // 保存接收的数据
-        $this->buffer .= $buf;
+        $this->buffer     .= $buf;
+        $this->update_time = time();
 
         // 是否收到一个头部
-        if ($this->bufferSize() < 4)
+        if ($this->contentSize() < 4)
             return;
 
         $header = unpack('N', $this->buffer);
@@ -77,7 +95,7 @@ class SockData
         $size = $header[1];
 
         // 是否收到一个完整的包
-        if ($this->bufferSize() < $size + 4)
+        if ($this->contentSize() < $size + 4)
             return;
         $string = substr($this->buffer, 4, $size);
 
@@ -102,36 +120,35 @@ class SockData
         }
     }
 
+    /**
+     * 当消息到来时 (sample)
+     */
     public function onMessage(object $msg)
+    {
+        
+        // 返回一个消息
+        $o = new stdClass;
+        $o->msg = "hello java world.";
+        $this->sendMessage($o);
+    }
+
+
+    /**
+     * 发送一段数据
+     */
+    private function sendMessage(object $o)
     {
         if ($this->closed())
             return;
 
-        $o = new \stdClass;
-
-        $o->msg = "hello java world.\r\n";
-
-        $this->sendPackage($o);
-    }
-
-    /**
-     * 发送数据
-     */
-    private function send($str)
-    {
-        socket_send($this->so, $str, strlen($str), 0);
-    }
-
-    private function sendPackage(object $o)
-    {
         $letter = json_encode($o);
 
         $size = strlen($letter);
 
         $header = pack('N', $size);
 
-        $this->send($header);
-        $this->send($letter);
+        socket_send($this->so, $header, strlen($header), 0);
+        socket_send($this->so, $letter, strlen($letter), 0);
     }
 }
 
