@@ -47,8 +47,6 @@ class Pigeon
 
         $this->objects  [ $id ] = $data;
         $this->resources[ $id ] = $data->fd();
-
-        echo 'add client ' . $id . PHP_EOL;
     }
 
     /**
@@ -66,8 +64,6 @@ class Pigeon
     {
         unset($this->objects  [ $id ]);
         unset($this->resources[ $id ]);
-
-        echo 'remote closed ' . $id . PHP_EOL;
     }
 
 
