@@ -134,7 +134,7 @@ class SockData
 
 
     /**
-     * 发送一段数据
+     * 发送一则消息
      */
     private function sendMessage(object $o)
     {
