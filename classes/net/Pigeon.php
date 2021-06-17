@@ -138,9 +138,10 @@ class Pigeon
         // 发现远端关闭
         else if ($ret === 0)
         {
-            $data->close();
-
             $this->del($id);
+
+            $data->close();
+            $data->onClose();
         }
         // 新数据
         else 

@@ -77,9 +77,18 @@ class SockData
         return strlen($this->buffer);
     }
 
+    /**
+     * TODO
+     */
     public function onError()
     {
-        // TODO
+    }
+
+    /**
+     * TODO
+     */
+    public function onClose()
+    {
     }
 
     /**
