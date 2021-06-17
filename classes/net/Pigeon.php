@@ -1,6 +1,8 @@
 <?php
 namespace net;
 
+use Exception;
+
 /**
  * 基于 TCP 的通信服务
  */
@@ -22,7 +24,13 @@ class Pigeon
         // resource of type (Socket)
         $this->so = socket_create(AF_INET, SOCK_STREAM, SOL_TCP);
 
-        socket_bind($this->so, $this->ip, $this->port);
+        $bool = @socket_bind($this->so, $this->ip, $this->port);
+        // 地址绑定失败
+        if ($bool === false)
+        {
+            $errcode = socket_last_error($this->so);
+            throw new Exception('socket bind error');
+        }
     }
 
     /**
