@@ -77,6 +77,11 @@ class SockData
         return strlen($this->buffer);
     }
 
+    public function onError()
+    {
+        // TODO
+    }
+
     /**
      * 当新的数据到来时
      */

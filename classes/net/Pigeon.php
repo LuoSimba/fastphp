@@ -8,6 +8,7 @@ use Exception;
  */
 class Pigeon 
 {
+    private $id;
     private $ip;
     private $port;
     private $so;
@@ -18,6 +19,7 @@ class Pigeon
 
     public function __construct()
     {
+        $this->id = spl_object_id($this);
         $this->ip = '0.0.0.0';
         $this->port = 9999;
 
@@ -86,14 +88,14 @@ class Pigeon
 
         while (true)
         {
-            $a = $this->resources;
-            $a['server'] = $this->so;
-            $b = null;
-            $c = null;
+            $readSet   = $this->resources;
+            $readSet[ $this->id ] = $this->so;
+            $writeSet  = null;
+            $exceptSet = null;
 
-            $n = socket_select($a, $b, $c, null);
+            $n = socket_select($readSet, $writeSet, $exceptSet, null);
 
-            $this->noticeAll($a);
+            $this->noticeAll($readSet);
         }
     }
 
@@ -101,7 +103,7 @@ class Pigeon
     {
         foreach ($list as $id => $so)
         {
-            if ($id === 'server')
+            if ($id === $this->id)
                 $this->accept();
             else
                 $this->notice($id);
@@ -121,15 +123,17 @@ class Pigeon
         $buf = '';
 
         // 尝试读取最多 2048 字节
-        //
-        // 10054 - 远程主机强迫关闭了一个现有的连接
-        $ret = socket_recv($fd, $buf, 2048, 0);
+        $ret = @socket_recv($fd, $buf, 2048, 0);
 
+        // 读取错误
         if ($ret === false)
         {
-            $data->close();
+            //socket_last_error($fd);
 
             $this->del($id);
+
+            $data->close();
+            $data->onError();
         }
         // 发现远端关闭
         else if ($ret === 0)
