@@ -77,7 +77,12 @@ class Pigeon
 
     public function run()
     {
-        socket_listen($this->so, 5);
+        $blisten = @socket_listen($this->so, 5);
+        if ($blisten === false)
+        {
+            //socket_last_error($this->so);
+            throw new Exception('socket listen error');
+        }
 
         while (true)
         {
