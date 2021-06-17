@@ -6,9 +6,9 @@
 // 但是如果将资源及时销毁，地址就会重新可用
 //
 
-echo "create 2 sockets" . PHP_EOL;
+echo "create socket 1" . PHP_EOL;
 $s1 = socket_create(AF_INET, SOCK_STREAM, SOL_TCP);
-$s2 = socket_create(AF_INET, SOCK_STREAM, SOL_TCP);
+var_dump($s1);
 
 echo "bind address 1" . PHP_EOL;
 $b1 = socket_bind($s1, 'localhost', 9999);
@@ -19,6 +19,14 @@ if ($b1 === false)
 
 echo "destroy socket 1" . PHP_EOL;
 unset($s1);
+
+
+echo '----------------------------' . PHP_EOL;
+
+
+echo 'create socket 2' . PHP_EOL;
+$s2 = socket_create(AF_INET, SOCK_STREAM, SOL_TCP);
+var_dump($s2);
 
 echo "bind address 2" . PHP_EOL;
 $b2 = socket_bind($s2, 'localhost', 9999);
