@@ -160,7 +160,7 @@ class SockData implements PigeonResource
         }
     }
 
-    final function pickNewPackage(): string
+    final private function pickNewPackage()
     {
         // 是否已经收到一个完整头部
         if ($this->contentSize() < 4)
