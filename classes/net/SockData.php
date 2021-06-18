@@ -48,7 +48,7 @@ class SockData implements PigeonResource
     /**
      * 是否关闭
      */
-    final public function closed()
+    final public function closed(): bool
     {
         return $this->closed;
     }

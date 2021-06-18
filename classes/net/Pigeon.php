@@ -8,12 +8,13 @@ use Exception;
  */
 class Pigeon implements PigeonResource
 {
+    // as a resource:
     private $id;
     private $ip;
     private $port;
     private $so;
 
-    // 自身同时也是一个容器
+    // as a container:
     private $objects   = array();
     private $resources = array();
 
@@ -40,6 +41,14 @@ class Pigeon implements PigeonResource
     final public function id(): int
     {
         return $this->id;
+    }
+
+    /**
+     * 不可关闭
+     */
+    final public function closed(): bool
+    {
+        return false;
     }
 
     /**
@@ -84,7 +93,7 @@ class Pigeon implements PigeonResource
     }
 
 
-    public function run()
+    final public function run()
     {
         $blisten = @socket_listen($this->so, 5);
         if ($blisten === false)
@@ -101,31 +110,25 @@ class Pigeon implements PigeonResource
 
             $n = socket_select($readSet, $writeSet, $exceptSet, null);
 
-            $this->noticeAll($readSet);
+            $this->notice($readSet);
         }
     }
 
     /**
      * 通知有新的数据到达
      */
-    private function noticeAll(array $list)
+    private function notice(array $list): void
     {
         foreach ($list as $id => $so)
         {
-            if ($id === $this->id)
-            {
-                $this->onData();
-            }
-            else
-            {
-                $data = $this->get($id);
-                $data->onData();
-                if ($data->closed())
-                    $this->del($id);
-            }
+            $data = $this->get($id);
+
+            $data->onData();
+
+            if ($data->closed())
+                $this->del($id);
         }
     }
-
 }
 
 
