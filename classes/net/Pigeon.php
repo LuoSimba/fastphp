@@ -6,7 +6,7 @@ use Exception;
 /**
  * 基于 TCP 的通信服务
  */
-class Pigeon implements PigeonResource
+final class Pigeon implements PigeonResource
 {
     // as a resource:
     private $id;

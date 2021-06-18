@@ -1,8 +1,8 @@
 <?php
 namespace net;
 
+use Exception;
 use JsonException;
-use stdClass;
 
 /**
  * 基于 TCP 的通信服务
@@ -155,9 +155,17 @@ class SockData implements PigeonResource
 
         } catch (JsonException $e) {
 
-            // XXX 暂时忽略 JSON 解析的错误
-            echo 'json decode error ...' . $this->id() . PHP_EOL;
-            //throw $e;
+            // 如果发现客户端传来的数据无法 JSON 解码，则认为
+            // 客户端存在严重的问题，应当立即终止通讯
+            $this->close();
+
+            $this->onError();
+
+        } catch (Exception $e) {
+
+            $this->close();
+
+            $this->onError();
         }
     }
 
@@ -166,10 +174,10 @@ class SockData implements PigeonResource
      */
     public function onMessage(object $msg)
     {
-        
         // 返回一个消息
-        $o = new stdClass;
+        $o = new PigeonMessage;
         $o->msg = "hello java world.";
+
         $this->sendMessage($o);
     }
 
@@ -177,19 +185,22 @@ class SockData implements PigeonResource
     /**
      * 发送一则消息
      */
-    private function sendMessage(object $o)
+    final private function sendMessage(PigeonMessage $o)
     {
         if ($this->closed())
             return;
 
-        $letter = json_encode($o);
+        $msg = json_encode($o);
+        $size = strlen($msg);
 
-        $size = strlen($letter);
+        $text = pack('N', $size) . $msg;
+        $writeSize = @socket_send($this->so, $text, strlen($text), 0);
 
-        $header = pack('N', $size);
-
-        socket_send($this->so, $header, strlen($header), 0);
-        socket_send($this->so, $letter, strlen($letter), 0);
+        // 写入错误
+        if ($writeSize === false)
+        {
+            throw new Exception('socket write error');
+        }
     }
 }
 
