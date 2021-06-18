@@ -33,12 +33,19 @@ class Pigeon implements PigeonResource
             $errcode = socket_last_error($this->so);
             throw new Exception('socket bind error');
         }
+
+        $this->add($this, $this->so);
+    }
+
+    final public function id(): int
+    {
+        return $this->id;
     }
 
     /**
      * 接受新的连接
      */
-    final public function onData()
+    final public function onData(): void
     {
         // resource of type (Socket)
         $so = socket_accept($this->so);
@@ -51,7 +58,7 @@ class Pigeon implements PigeonResource
     /**
      * container
      */
-    private function add(SockData $data,  $so)
+    private function add(PigeonResource $data,  $so)
     {
         $id = $data->id();
 
@@ -89,7 +96,6 @@ class Pigeon implements PigeonResource
         while (true)
         {
             $readSet   = $this->resources;
-            $readSet[ $this->id ] = $this->so;
             $writeSet  = null;
             $exceptSet = null;
 
@@ -99,31 +105,27 @@ class Pigeon implements PigeonResource
         }
     }
 
+    /**
+     * 通知有新的数据到达
+     */
     private function noticeAll(array $list)
     {
         foreach ($list as $id => $so)
         {
             if ($id === $this->id)
+            {
                 $this->onData();
+            }
             else
-                $this->notice($id);
+            {
+                $data = $this->get($id);
+                $data->onData();
+                if ($data->closed())
+                    $this->del($id);
+            }
         }
     }
 
-    /**
-     * 通知有新的数据到达
-     *
-     * 由服务统一读取数据，并通知各个连接
-     */
-    private function notice(int $id)
-    {
-        $data = $this->get($id);
-
-        $data->onData();
-
-        if ($data->closed())
-            $this->del($id);
-    }
 }
 
 

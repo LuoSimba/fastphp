@@ -3,7 +3,8 @@ namespace net;
 
 interface PigeonResource 
 {
+    function id(): int;
 
-    function onData();
+    function onData(): void;
 }
 

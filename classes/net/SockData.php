@@ -40,7 +40,7 @@ class SockData implements PigeonResource
         $this->update_time = $this->create_time;
     }
 
-    final public function id()
+    final public function id(): int
     {
         return $this->id;
     }
@@ -89,7 +89,7 @@ class SockData implements PigeonResource
     /**
      * 当新的数据到来时
      */
-    final public function onData()
+    final public function onData(): void
     {
         // 自身主动读取
         $this->update_time = time();
