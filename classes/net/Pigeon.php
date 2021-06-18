@@ -6,7 +6,7 @@ use Exception;
 /**
  * 基于 TCP 的通信服务
  */
-class Pigeon 
+class Pigeon implements PigeonResource
 {
     private $id;
     private $ip;
@@ -38,7 +38,7 @@ class Pigeon
     /**
      * 接受新的连接
      */
-    private function accept()
+    public function onData()
     {
         // resource of type (Socket)
         $so = socket_accept($this->so);
@@ -104,7 +104,7 @@ class Pigeon
         foreach ($list as $id => $so)
         {
             if ($id === $this->id)
-                $this->accept();
+                $this->onData();
             else
                 $this->notice($id);
         }
