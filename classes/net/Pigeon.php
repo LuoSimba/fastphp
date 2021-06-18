@@ -38,25 +38,25 @@ class Pigeon implements PigeonResource
     /**
      * 接受新的连接
      */
-    public function onData()
+    final public function onData()
     {
         // resource of type (Socket)
         $so = socket_accept($this->so);
 
         $data = new SockData($so);
 
-        $this->add($data);
+        $this->add($data, $so);
     }
 
     /**
      * container
      */
-    private function add(SockData $data)
+    private function add(SockData $data,  $so)
     {
         $id = $data->id();
 
         $this->objects  [ $id ] = $data;
-        $this->resources[ $id ] = $data->fd();
+        $this->resources[ $id ] = $so;
     }
 
     /**
@@ -119,35 +119,10 @@ class Pigeon implements PigeonResource
     {
         $data = $this->get($id);
 
-        $fd = $data->fd();
-        $buf = '';
+        $data->onData();
 
-        // 尝试读取最多 2048 字节
-        $ret = @socket_recv($fd, $buf, 2048, 0);
-
-        // 读取错误
-        if ($ret === false)
-        {
-            //socket_last_error($fd);
-
+        if ($data->closed())
             $this->del($id);
-
-            $data->close();
-            $data->onError();
-        }
-        // 发现远端关闭
-        else if ($ret === 0)
-        {
-            $this->del($id);
-
-            $data->close();
-            $data->onClose();
-        }
-        // 新数据
-        else 
-        {
-            $data->onData($buf);
-        }
     }
 }
 

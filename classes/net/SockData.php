@@ -7,7 +7,7 @@ use stdClass;
 /**
  * 基于 TCP 的通信服务
  */
-class SockData
+class SockData implements PigeonResource
 {
     private $id;
     private $so;
@@ -43,11 +43,6 @@ class SockData
     final public function id()
     {
         return $this->id;
-    }
-
-    final public function fd()
-    {
-        return $this->so;
     }
 
     /**
@@ -94,11 +89,43 @@ class SockData
     /**
      * 当新的数据到来时
      */
-    final public function onData(string $buf)
+    final public function onData()
     {
+        // 自身主动读取
+        $this->update_time = time();
+
+
+        // 尝试读取最多 2048 字节
+        $buf = '';
+
+        $readSize = @socket_recv($this->so, $buf, 2048, 0);
+
+        // 读取错误
+        if ($readSize === false)
+        {
+            // socket_last_error($this->so);
+            $this->close();
+
+            $this->onError();
+            return;
+        }
+        // 发现远端关闭
+        else if ($readSize === 0)
+        {
+            $this->close();
+
+            $this->onClose();
+            return;
+        }
+        
+
+        // else 新数据 ...
+
+
+
+
         // 保存接收的数据
         $this->buffer     .= $buf;
-        $this->update_time = time();
 
         // 是否收到一个头部
         if ($this->contentSize() < 4)
