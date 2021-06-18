@@ -23,6 +23,7 @@ class SockData implements PigeonResource
 
     private $create_time;
     private $update_time;
+    private $recv_count;
 
     private $closed = false;
 
@@ -38,6 +39,7 @@ class SockData implements PigeonResource
 
         $this->create_time = time();
         $this->update_time = $this->create_time;
+        $this->recv_count = 0;
     }
 
     final public function id(): int
@@ -52,6 +54,14 @@ class SockData implements PigeonResource
     {
         return $this->closed;
     }
+
+    /**
+     * 返回收到的消息数
+     */
+    final public function getRecvCount(): int { return $this->recv_count; }
+
+    final public function getCreateTime(): int { return $this->create_time; }
+    final public function getUpdateTime(): int { return $this->update_time; }
 
     /**
      * 关闭 socket 连接
@@ -120,32 +130,13 @@ class SockData implements PigeonResource
         
 
         // else 新数据 ...
-
-
-
-
         // 保存接收的数据
-        $this->buffer     .= $buf;
+        $this->buffer .= $buf;
 
-        // 是否收到一个头部
-        if ($this->contentSize() < 4)
+        $string = $this->pickNewPackage();
+        if ($string === null)
             return;
 
-        $header = unpack('N', $this->buffer);
-        // 得到主体的大小
-        $size = $header[1];
-
-        // 是否收到一个完整的包
-        if ($this->contentSize() < $size + 4)
-            return;
-        $string = substr($this->buffer, 4, $size);
-
-        // 将整个包移出缓存
-        $this->buffer = substr($this->buffer, $size + 4);
-
-        // 这个包没有主体, 无需处理
-        if ($size === 0)
-            return;
 
         try {
 
@@ -169,6 +160,33 @@ class SockData implements PigeonResource
         }
     }
 
+    final function pickNewPackage(): string
+    {
+        // 是否已经收到一个完整头部
+        if ($this->contentSize() < 4)
+            return null;
+
+        $header = unpack('N', $this->buffer);
+
+        // 得到主体的大小
+        $size = $header[1];
+
+        // 是否收到一个完整的包
+        if ($this->contentSize() < $size + 4)
+            return null;
+
+        $string = substr($this->buffer, 4, $size);
+        // 将整个包移出缓存
+        $this->buffer = substr($this->buffer, 4 + $size);
+        $this->recv_count ++;
+
+        // 这个包没有主体，无需处理
+        if ($size === 0)
+            return null;
+
+        return $string;
+    }
+
     /**
      * 当消息到来时 (sample)
      */
@@ -188,7 +206,7 @@ class SockData implements PigeonResource
     final private function sendMessage(PigeonMessage $o)
     {
         if ($this->closed())
-            return;
+            throw new Exception('socket already closed');
 
         $msg = json_encode($o);
         $size = strlen($msg);

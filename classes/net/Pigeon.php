@@ -13,6 +13,9 @@ final class Pigeon implements PigeonResource
     private $ip;
     private $port;
     private $so;
+    private $recv_count;
+    private $create_time;
+    private $update_time;
 
     // as a container:
     private $objects   = array();
@@ -23,6 +26,9 @@ final class Pigeon implements PigeonResource
         $this->id = spl_object_id($this);
         $this->ip = '0.0.0.0';
         $this->port = 9999;
+        $this->recv_count = 0;
+        $this->create_time = time();
+        $this->update_time = $this->create_time;
 
         // resource of type (Socket)
         $this->so = socket_create(AF_INET, SOCK_STREAM, SOL_TCP);
@@ -38,18 +44,12 @@ final class Pigeon implements PigeonResource
         $this->add($this, $this->so);
     }
 
-    final public function id(): int
-    {
-        return $this->id;
-    }
+    final public function id(): int { return $this->id; }
 
     /**
      * 不可关闭
      */
-    final public function closed(): bool
-    {
-        return false;
-    }
+    final public function closed(): bool { return false; }
 
     /**
      * 接受新的连接
@@ -62,7 +62,18 @@ final class Pigeon implements PigeonResource
         $data = new SockData($so);
 
         $this->add($data, $so);
+        // statistics
+        $this->update_time = time();
+        $this->recv_count ++;
     }
+
+    /**
+     * 返回收到的连接数
+     */
+    final public function getRecvCount(): int { return $this->recv_count; }
+
+    final public function getCreateTime(): int { return $this->create_time; }
+    final public function getUpdateTime(): int { return $this->update_time; }
 
     /**
      * container
@@ -127,6 +138,21 @@ final class Pigeon implements PigeonResource
 
             if ($data->closed())
                 $this->del($id);
+        }
+    }
+
+    /**
+     * 打印信息
+     */
+    final public function debug()
+    {
+        foreach ($this->objects as $id => $obj) 
+        {
+            echo '-------' . PHP_EOL;
+            echo 'id=' . $id . PHP_EOL;
+            echo 'create time=' . date('Y-m-d H:i:s', $obj->getCreateTime()) . PHP_EOL;
+            echo 'update time=' . date('Y-m-d H:i:s', $obj->getUpdateTime()) . PHP_EOL;
+            echo 'recv count=' . $obj->getRecvCount() . PHP_EOL;
         }
     }
 }
