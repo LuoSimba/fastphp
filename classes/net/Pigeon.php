@@ -1,84 +1,32 @@
 <?php
 namespace net;
 
-use Exception;
-
 /**
  * 基于 TCP 的通信服务
+ *
+ * 容器类
+ *
+ * 容器负责维护各个连接，监视连接是否有新的数据
+ * 到来，然后通知各个连接自行获取。容器本身并不
+ * 亲自执行 socket 连接的读写。
  */
 final class Pigeon implements PigeonResource
 {
-    // as a resource:
-    private $id;
-    private $ip;
-    private $port;
-    private $so;
-    private $recv_count;
-    private $create_time;
-    private $update_time;
+    private $server = null;
 
-    // as a container:
     private $objects   = array();
     private $resources = array();
 
     public function __construct()
     {
-        $this->id = spl_object_id($this);
-        $this->ip = '0.0.0.0';
-        $this->port = 9999;
-        $this->recv_count = 0;
-        $this->create_time = time();
-        $this->update_time = $this->create_time;
+        $server = new PigeonServer;
+        $server->setRelatedContainer($this);
 
-        // resource of type (Socket)
-        $this->so = socket_create(AF_INET, SOCK_STREAM, SOL_TCP);
-
-        $bool = @socket_bind($this->so, $this->ip, $this->port);
-        // 地址绑定失败
-        if ($bool === false)
-        {
-            $errcode = socket_last_error($this->so);
-            throw new Exception('socket bind error');
-        }
-
-        $this->add($this, $this->so);
+        $this->server = $server;
+        $this->add($server, $server->fd());
     }
 
-    final public function id(): int { return $this->id; }
-
-    /**
-     * 不可关闭
-     */
-    final public function closed(): bool { return false; }
-
-    /**
-     * 接受新的连接
-     */
-    final public function onData(): void
-    {
-        // resource of type (Socket)
-        $so = socket_accept($this->so);
-
-        $data = new SockData($so);
-
-        $this->add($data, $so);
-        // statistics
-        $this->update_time = time();
-        $this->recv_count ++;
-    }
-
-    /**
-     * 返回收到的连接数
-     */
-    final public function getRecvCount(): int { return $this->recv_count; }
-
-    final public function getCreateTime(): int { return $this->create_time; }
-    final public function getUpdateTime(): int { return $this->update_time; }
-
-    /**
-     * container
-     */
-    private function add(PigeonResource $data,  $so)
+    public function add(PigeonResource $data,  $so)
     {
         $id = $data->id();
 
@@ -86,32 +34,20 @@ final class Pigeon implements PigeonResource
         $this->resources[ $id ] = $so;
     }
 
-    /**
-     * container
-     */
     private function get(int $id)
     {
         return $this->objects[ $id ];
     }
 
-    /**
-     * container
-     */
     private function del(int $id)
     {
         unset($this->objects  [ $id ]);
         unset($this->resources[ $id ]);
     }
 
-
     final public function run()
     {
-        $blisten = @socket_listen($this->so, 5);
-        if ($blisten === false)
-        {
-            //socket_last_error($this->so);
-            throw new Exception('socket listen error');
-        }
+        $this->server->listen();
 
         while (true)
         {
