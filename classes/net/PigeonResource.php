@@ -13,5 +13,7 @@ interface PigeonResource
 
     function getCreateTime(): int;
     function getUpdateTime(): int;
+
+    function fd();
 }
 

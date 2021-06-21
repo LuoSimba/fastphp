@@ -32,6 +32,10 @@ class SockData implements PigeonResource
 
     public function __construct($so)
     {
+        $type = get_resource_type($so);
+        if ($type !== "Socket")
+            throw new Exception('need type(Socket)');
+
         // get_resource_id require PHP8
         $this->id = spl_object_id($this);
 
@@ -45,6 +49,11 @@ class SockData implements PigeonResource
     final public function id(): int
     {
         return $this->id;
+    }
+
+    final public function fd()
+    {
+        return $this->so;
     }
 
     /**

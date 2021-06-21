@@ -59,7 +59,9 @@ final class PigeonServer implements PigeonResource
         // 将连接加入到容器维护
         if ($this->container)
         {
-            $this->container->addSocket($so);
+            $conn = new SockData($so);
+
+            $this->container->add($conn);
         }
     }
 

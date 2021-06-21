@@ -6,13 +6,11 @@ use Exception;
 /**
  * 基于 TCP 的通信服务
  *
- * 容器类
- *
  * 容器负责维护各个连接，监视连接是否有新的数据
  * 到来，然后通知各个连接自行获取。容器本身并不
  * 亲自执行 socket 连接的读写。
  */
-final class Pigeon
+final class Pigeon implements PigeonContainer
 {
     private $server = null;
 
@@ -25,38 +23,27 @@ final class Pigeon
         $server->setRelatedContainer($this);
 
         $this->server = $server;
-        $this->add($server, $server->fd());
+        $this->add($server);
     }
 
     /**
      * 将一个 socket 资源包装成一个具体的对象，并
      * 放入容器中
      */
-    private function add(PigeonResource $data, $so): void
+    public function add(PigeonResource $conn): void
     {
-        $id = $data->id();
+        $id = $conn->id();
 
-        $this->objects  [ $id ] = $data;
-        $this->resources[ $id ] = $so;
+        $this->objects  [ $id ] = $conn;
+        $this->resources[ $id ] = $conn->fd();
     }
 
-    public function addSocket($so): void
-    {
-        $type = get_resource_type($so);
-        if ($type !== "Socket")
-            throw new Exception('need type(Socket)');
-
-        $data = new SockData($so);
-
-        $this->add($data, $so);
-    }
-
-    private function get(int $id)
+    public function get(int $id): PigeonResource
     {
         return $this->objects[ $id ];
     }
 
-    private function del(int $id)
+    public function del(int $id): void
     {
         unset($this->objects  [ $id ]);
         unset($this->resources[ $id ]);
