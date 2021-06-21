@@ -7,42 +7,28 @@ use Exception;
  * 监听服务端口，接收新的连接，并将新连接
  * 加入到容器统一维护
  */
-final class PigeonServer implements PigeonResource
+final class PigeonServer extends PigeonResource
 {
-    private $id;
     private $ip;
     private $port;
-    private $so;
-
-    private $recv_count;
-    private $create_time;
-    private $update_time;
-
     private $container = null;
 
     public function __construct()
     {
-        $this->id = spl_object_id($this);
         $this->ip = '0.0.0.0';
         $this->port = 9999;
-        $this->recv_count = 0;
-        $this->create_time = time();
-        $this->update_time = $this->create_time;
 
-        // resource of type (Socket)
-        $this->so = socket_create(AF_INET, SOCK_STREAM, SOL_TCP);
+        $so = socket_create(AF_INET, SOCK_STREAM, SOL_TCP);
 
-        $bool = @socket_bind($this->so, $this->ip, $this->port);
+        $bool = @socket_bind($so, $this->ip, $this->port);
         // 地址绑定失败
-        if ($bool === false)
+        if ($bool === false || $bool === null)
         {
-            //$errcode = socket_last_error($this->so);
+            //$errcode = socket_last_error($so);
             throw new Exception('socket bind error');
         }
-    }
 
-    final public function id(): int {
-        return $this->id;
+        parent::__construct($so);
     }
 
     /**
@@ -51,10 +37,10 @@ final class PigeonServer implements PigeonResource
     final public function onData(): void
     {
         // resource of type (Socket)
-        $so = socket_accept($this->so);
+        $so = socket_accept($this->fd());
         // statistics
-        $this->update_time = time();
-        $this->recv_count ++;
+        $this->update();
+        $this->recvUp();
 
         // 将连接加入到容器维护
         if ($this->container)
@@ -65,28 +51,14 @@ final class PigeonServer implements PigeonResource
         }
     }
 
-    /**
-     * 返回收到的连接数
-     */
-    final public function getRecvCount(): int {
-        return $this->recv_count;
+    // TODO
+    public function onError(): void
+    {
     }
 
-    final public function getCreateTime(): int {
-        return $this->create_time;
-    }
-
-    final public function getUpdateTime(): int {
-        return $this->update_time;
-    }
-
-    /**
-     * 不可关闭
-     *
-     * XXX 应该是可以关闭的
-     */
-    final public function closed(): bool {
-        return false;
+    // TODO
+    public function onClose(): void
+    {
     }
 
     public function setRelatedContainer(Pigeon $container)
@@ -106,18 +78,12 @@ final class PigeonServer implements PigeonResource
         if ($this->container === null)
             throw new Exception('set container first');
 
-        $blisten = @socket_listen($this->so, 5);
-
-        if ($blisten === false)
+        $blisten = @socket_listen($this->fd(), 5);
+        if ($blisten === false || $blisten === null)
         {
-            //socket_last_error($this->so);
+            //socket_last_error($this->fd());
             throw new Exception('socket listen error');
         }
-    }
-
-    public function fd()
-    {
-        return $this->so;
     }
 }
 
