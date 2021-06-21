@@ -1,6 +1,8 @@
 <?php
 namespace net;
 
+use Exception;
+
 /**
  * 基于 TCP 的通信服务
  *
@@ -10,7 +12,7 @@ namespace net;
  * 到来，然后通知各个连接自行获取。容器本身并不
  * 亲自执行 socket 连接的读写。
  */
-final class Pigeon implements PigeonResource
+final class Pigeon
 {
     private $server = null;
 
@@ -26,12 +28,27 @@ final class Pigeon implements PigeonResource
         $this->add($server, $server->fd());
     }
 
-    public function add(PigeonResource $data,  $so)
+    /**
+     * 将一个 socket 资源包装成一个具体的对象，并
+     * 放入容器中
+     */
+    private function add(PigeonResource $data, $so): void
     {
         $id = $data->id();
 
         $this->objects  [ $id ] = $data;
         $this->resources[ $id ] = $so;
+    }
+
+    public function addSocket($so): void
+    {
+        $type = get_resource_type($so);
+        if ($type !== "Socket")
+            throw new Exception('need type(Socket)');
+
+        $data = new SockData($so);
+
+        $this->add($data, $so);
     }
 
     private function get(int $id)

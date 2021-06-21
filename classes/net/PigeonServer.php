@@ -56,13 +56,10 @@ final class PigeonServer implements PigeonResource
         $this->update_time = time();
         $this->recv_count ++;
 
-
-        $data = new SockData($so);
-
         // 将连接加入到容器维护
         if ($this->container)
         {
-            $this->container->add($data, $so);
+            $this->container->addSocket($so);
         }
     }
 
