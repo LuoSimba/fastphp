@@ -68,13 +68,11 @@ class ResultSet
         return $list;
     }
 
-    /**
-     * 释放资源
-     */
-    public function free()
-    {
-        $this->rs->free();
-    }
+
+    // 无需通过 free() 来释放资源
+    // 当对象没有被引用时，对象（包括资源）
+    // 占用的空间会全部被释放
+    //$this->rs->free();
 
     //$rs->fetch_assoc();
 }
