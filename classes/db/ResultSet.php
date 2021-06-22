@@ -73,6 +73,17 @@ class ResultSet
     // 当对象没有被引用时，对象（包括资源）
     // 占用的空间会全部被释放
     //$this->rs->free();
+    //
+    // 这个可以很容易测试得到结果：
+    //
+    // repeat 10000 times do:
+    //   var set = mysql.query('select * from t1 join t2 join t3 join ...')
+    //   echo memory_get_usage()
+    //
+    // 我们从数据库中查出很多表连接的笛卡尔积，
+    // 这个结果往往非常大，缓存在 set 变量中，
+    // 只要我们每次都丢弃这个变量，内存占用并
+    // 不会越来越高
 
     //$rs->fetch_assoc();
 }
