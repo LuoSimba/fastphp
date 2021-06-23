@@ -15,6 +15,8 @@
 $so = socket_create(AF_INET, SOCK_STREAM, SOL_TCP);
 socket_bind($so, 'localhost', 9999);
 socket_listen($so, 0);
+// listen() 可以再次调用，虽然不会报错，但是也不会起作用
+//socket_listen($so, 200);
 
 $pool = array();
 
