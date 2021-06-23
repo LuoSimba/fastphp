@@ -8,10 +8,13 @@
 // 当服务端醒来的时候，处理的都是 20 秒前在队列
 // 中排队的那些连接。
 //
+// windows 10: 200 (backlog=1000)
+//               5 (backlog=5)
+//               1 (backlog=0)
 
 $so = socket_create(AF_INET, SOCK_STREAM, SOL_TCP);
 socket_bind($so, 'localhost', 9999);
-socket_listen($so, 1000);
+socket_listen($so, 0);
 
 $pool = array();
 
