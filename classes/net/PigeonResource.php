@@ -5,7 +5,6 @@ use Exception;
 
 abstract class PigeonResource 
 {
-    private $id;
     private $so;
     private $create_time;
     private $update_time;
@@ -19,8 +18,6 @@ abstract class PigeonResource
         if ($type !== "Socket")
             throw new Exception('need type(Socket)');
 
-        // get_resource_id requires PHP8
-        $this->id = spl_object_id($this);
         $this->so = $so;
 
         $this->recv_count = 0;
@@ -31,7 +28,7 @@ abstract class PigeonResource
 
     final public function id(): int
     {
-        return $this->id;
+        return (int)$this->so;
     }
 
     abstract function onData(): void;
