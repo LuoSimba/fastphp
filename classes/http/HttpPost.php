@@ -14,7 +14,7 @@ namespace http;
  *    echo a.getContent();
  *
  */
-final class HttpPost extends HttpClient
+class HttpPost extends HttpClient
 {
     public function __construct()
     {
@@ -24,14 +24,16 @@ final class HttpPost extends HttpClient
 
     }
 
-    public function sendJSON(array $data)
+    public function post(array $data): self
     {
-        $this->header('Content-Type', 'application/json');
+        curl_setopt($this->handle(), CURLOPT_POSTFIELDS, $data);
 
-        $json = json_encode($data);
-        curl_setopt($this->handle(), CURLOPT_POSTFIELDS, $json);
+        return $this;
+    }
 
-        $this->send();
+    public function getContent()
+    {
+        return parent::getContent();
     }
 }
 

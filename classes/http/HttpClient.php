@@ -67,13 +67,5 @@ abstract class HttpClient
     {
         return $this->content;
     }
-
-    public function getContent_JSON()
-    {
-        if ($this->content === null || $this->content === false)
-            return false;
-
-        return json_decode($this->content);
-    }
 }
 
